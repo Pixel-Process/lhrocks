@@ -4,16 +4,184 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Agenda des concerts</title>
+
 <style>
-body{margin:0;background:#f3f3f3;color:#171717;font:16px Arial,sans-serif}
-header{background:#171717;color:white;padding:2rem max(1rem,calc((100% - 900px)/2));border-bottom:6px solid #d71920}
-main{max-width:900px;margin:2rem auto;padding:0 1rem}
-h1{margin:0} h2{margin-top:2rem}
-article{background:white;padding:1.2rem;margin:1rem 0;border-left:4px solid #d71920}
-.date{font-weight:bold;color:#d71920}
-a{color:#b31319}
+  body {
+    margin: 0;
+    background: #f3f3f3;
+    color: #171717;
+    font: 16px Arial, sans-serif;
+  }
+
+  header {
+    background: #171717;
+    color: white;
+    padding: 2rem max(1rem, calc((100% - 900px) / 2));
+    border-bottom: 6px solid #d71920;
+  }
+
+  h1 { margin: 0; }
+
+  main {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  .filtres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: end;
+    background: white;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .filtres label {
+    display: grid;
+    gap: .4rem;
+  }
+
+  input, select, button {
+    padding: .6rem;
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  article {
+    background: white;
+    padding: 1.2rem;
+    margin: 1rem 0;
+    border-left: 4px solid #d71920;
+  }
+
+  article[hidden] { display: none; }
+
+  .date {
+    font-weight: bold;
+    color: #d71920;
+  }
+
+  a { color: #b31319; }
 </style>
 </head>
+
 <body>
-<header><h1>Agenda des concerts</h1></header>
-<main><article><div class="date">Saturday 14 November 2026 · 20:30</div><h2>Test rock</h2><p>La Fabrique · Lyon</p><p>Indie · Rock</p><p><a href="https://example.com/tickets1">Billetterie</a></p></article><article><div class="date">Saturday 21 November 2026 · 21:00</div><h2>Test électro</h2><p>Le Petit Bain · Paris</p><p>Électro</p><p><a href="https://example.com/tickets2">Billetterie</a></p></article><article><div class="date">Saturday 5 December 2026 · 19:30</div><h2>Concert acoustique</h2><p>Salle des Fêtes · Lille</p><p>Acoustique · Folk</p><p><a href="https://example.com/tickets3">Billetterie</a></p></article></main></body></html>
+<header>
+  <h1>Agenda des concerts</h1>
+</header>
+
+<main>
+  <section class="filtres" aria-label="Filtres des concerts">
+    <label>
+      À partir du
+      <input type="date" id="date-min">
+    </label>
+
+    <label>
+      Jusqu’au
+      <input type="date" id="date-max">
+    </label>
+
+    <label>
+      Style
+      <select id="filtre-style">
+        <option value="">Tous les styles</option>
+        <option value="rock">Rock</option>
+        <option value="electro">Électro</option>
+        <option value="acoustique">Acoustique</option>
+        <option value="folk">Folk</option>
+      </select>
+    </label>
+
+    <label>
+      Salle
+      <select id="filtre-salle">
+        <option value="">Toutes les salles</option>
+        <option value="la fabrique">La Fabrique</option>
+        <option value="le petit bain">Le Petit Bain</option>
+        <option value="salle des fêtes">Salle des Fêtes</option>
+      </select>
+    </label>
+
+    <button type="button" id="reinitialiser">Réinitialiser</button>
+  </section>
+
+  <p id="compteur" aria-live="polite"></p>
+
+  <article data-date="2026-11-14" data-styles="indie rock" data-salle="la fabrique">
+    <div class="date">Samedi 14 novembre 2026 · 20:30</div>
+    <h2>Test rock</h2>
+    <p>La Fabrique · Lyon</p>
+    <p>Indie · Rock</p>
+    <p><a href="https://example.com/tickets1">Billetterie</a></p>
+  </article>
+
+  <article data-date="2026-11-21" data-styles="electro" data-salle="le petit bain">
+    <div class="date">Samedi 21 novembre 2026 · 21:00</div>
+    <h2>Test électro</h2>
+    <p>Le Petit Bain · Paris</p>
+    <p>Électro</p>
+    <p><a href="https://example.com/tickets2">Billetterie</a></p>
+  </article>
+
+  <article data-date="2026-12-05" data-styles="acoustique folk" data-salle="salle des fêtes">
+    <div class="date">Samedi 5 décembre 2026 · 19:30</div>
+    <h2>Concert acoustique</h2>
+    <p>Salle des Fêtes · Lille</p>
+    <p>Acoustique · Folk</p>
+    <p><a href="https://example.com/tickets3">Billetterie</a></p>
+  </article>
+</main>
+
+<script>
+  const articles = [...document.querySelectorAll("article")];
+  const dateMin = document.getElementById("date-min");
+  const dateMax = document.getElementById("date-max");
+  const style = document.getElementById("filtre-style");
+  const salle = document.getElementById("filtre-salle");
+  const compteur = document.getElementById("compteur");
+
+  function filtrerConcerts() {
+    let visibles = 0;
+
+    articles.forEach(article => {
+      const date = article.dataset.date;
+      const styles = article.dataset.styles.split(" ");
+      const lieu = article.dataset.salle;
+
+      const correspond =
+        (!dateMin.value || date >= dateMin.value) &&
+        (!dateMax.value || date <= dateMax.value) &&
+        (!style.value || styles.includes(style.value)) &&
+        (!salle.value || lieu === salle.value);
+
+      article.hidden = !correspond;
+      if (correspond) visibles++;
+    });
+
+    compteur.textContent =
+      `${visibles} concert${visibles > 1 ? "s" : ""} affiché${visibles > 1 ? "s" : ""}`;
+  }
+
+  [dateMin, dateMax, style, salle].forEach(element => {
+    element.addEventListener("input", filtrerConcerts);
+    element.addEventListener("change", filtrerConcerts);
+  });
+
+  document.getElementById("reinitialiser").addEventListener("click", () => {
+    dateMin.value = "";
+    dateMax.value = "";
+    style.value = "";
+    salle.value = "";
+    filtrerConcerts();
+  });
+
+  filtrerConcerts();
+</script>
+</body>
+</html>
